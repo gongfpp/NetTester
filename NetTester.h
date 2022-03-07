@@ -24,4 +24,5 @@ signals:
 private:
     Ui::NetTesterClass ui;
     QTcpSocket* m_socket;
+    
 };

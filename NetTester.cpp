@@ -43,10 +43,10 @@ void NetTester::bindConnect()
     //    });
 }
 int NetTester::sendTCP(QString IP,quint16 port, QString data) {
-    //m_socket->connectToHost(QHostAddress(IP), port);
-    //m_socket->write(ui.plainTextEditData->toPlainText().toLocal8Bit());
-
-    return 0;
+    m_socket->connectToHost(QHostAddress(IP), port);
+    int reCode = m_socket->write(ui.plainTextEditData->toPlainText().toLocal8Bit());
+    m_socket->close();
+    return reCode;
 }
 int NetTester::listenTCP(int port)
 {
@@ -57,15 +57,16 @@ int NetTester::Log(QString log)
     ui.plainTextEditLog->appendPlainText(log);
     return 0;
 }
-
 void NetTester::on_buttonSendTCP_clicked()
 {
     Log("on_buttonSendTCP_clicked");
     QString IP = ui.editSendIP->text();
     unsigned short port = ui.editSendPort->text().toUShort();
-    
-}
+    QString data = ui.plainTextEditData->toPlainText();
 
+    int reCode = sendTCP(IP, port, data);
+    Log(QString("SendTCP reCode:%1").arg(reCode));
+}
 void NetTester::on_buttonListenTCP_clicked()
 {
     Log("on_buttonListenTCP_clicked");
