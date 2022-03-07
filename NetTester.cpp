@@ -5,7 +5,7 @@ NetTester::NetTester(QWidget *parent)
 {
     ui.setupUi(this);
     bindConnect();
-    setWindowTitle("TCP - 客户端");
+    setWindowTitle(QString("TCP - client").toUtf8());
 
     // 创建通信的套接字对象
     m_socket = new QTcpSocket(this);
@@ -13,12 +13,10 @@ NetTester::NetTester(QWidget *parent)
    
 
 }
-
-
 void NetTester::bindConnect()
 {
-    connect(ui.buttonListenTCP, &QPushButton::clicked, this, &NetTester::listenTCP);
-    connect(ui.buttonSendTCP, &QPushButton::clicked, this, &NetTester::sendTCP);
+    connect(ui.buttonListenTCP, &QPushButton::clicked, this, &NetTester::on_buttonListenTCP_clicked);
+    connect(ui.buttonSendTCP, &QPushButton::clicked, this, &NetTester::on_buttonSendTCP_clicked);
     
 
     //// 检测服务器是否回复了数据
@@ -44,27 +42,31 @@ void NetTester::bindConnect()
     //        ui->disconnect->setEnabled(false);
     //    });
 }
-
-int NetTester::sendTCP(QString url, QString data) {
-    QString IP = ui.editSendIP->text();
-    unsigned short port = ui.editSendPort->text().toUShort();
-    m_socket->connectToHost(QHostAddress(IP), port);
-
+int NetTester::sendTCP(QString IP,quint16 port, QString data) {
+    //m_socket->connectToHost(QHostAddress(IP), port);
     //m_socket->write(ui.plainTextEditData->toPlainText().toLocal8Bit());
 
-
-
     return 0;
 }
-
 int NetTester::listenTCP(int port)
 {
-    
     return 0;
 }
-
 int NetTester::Log(QString log)
 {
     ui.plainTextEditLog->appendPlainText(log);
     return 0;
+}
+
+void NetTester::on_buttonSendTCP_clicked()
+{
+    Log("on_buttonSendTCP_clicked");
+    QString IP = ui.editSendIP->text();
+    unsigned short port = ui.editSendPort->text().toUShort();
+    
+}
+
+void NetTester::on_buttonListenTCP_clicked()
+{
+    Log("on_buttonListenTCP_clicked");
 }

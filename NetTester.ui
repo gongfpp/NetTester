@@ -99,7 +99,7 @@
      </widget>
     </item>
     <item>
-     <widget class="QGroupBox" name="groupBox">
+     <widget class="QGroupBox" name="groupBoxData">
       <property name="title">
        <string>数据交换区</string>
       </property>

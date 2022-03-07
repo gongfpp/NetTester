@@ -11,10 +11,11 @@ class NetTester : public QMainWindow
 public:
     NetTester(QWidget *parent = Q_NULLPTR);
     void bindConnect();
-    int sendTCP(QString url, QString data);
+    int sendTCP(QString IP,quint16 port, QString data);
     int listenTCP(int port = 12600);
     int Log(QString log);
-
+    void on_buttonSendTCP_clicked();
+    void on_buttonListenTCP_clicked();
 
 signals:
     
