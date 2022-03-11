@@ -86,6 +86,13 @@
            </layout>
           </item>
           <item>
+           <widget class="QPushButton" name="buttonConnect">
+            <property name="text">
+             <string>建立链接</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="buttonSendTCP">
             <property name="text">
              <string>发送数据包(第一次发会建立链接)</string>
