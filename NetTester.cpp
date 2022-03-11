@@ -3,60 +3,8 @@
 #include "QtXml"
 #include "QFile"
 #pragma execution_character_set("utf-8")
-QString NetTester::GET_FEED_INFORMATION(QString PROSN_ZJ, QString TBR_SBBH, QMap<QString, QString>CHECK_ITEM)
-{
-    QDomDocument domDoc;
-    domDoc.appendChild(domDoc.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\""));
 
-    QDomElement STD_IN = domDoc.createElement("STD_IN");
-
-    QDomElement ObjectID = domDoc.createElement("ObjectID");
-
-    ObjectID.appendChild(domDoc.createTextNode("GET_FEED_INFORMATION"));
-    QDomElement DATA = domDoc.createElement("DATA");
-    QDomElement PROSN_ZJNode = domDoc.createElement("PROSN_ZJ");
-    PROSN_ZJNode.appendChild(domDoc.createTextNode(PROSN_ZJ));
-    QDomElement TBR_SBBHNode = domDoc.createElement("TBR_SBBH");
-    TBR_SBBHNode.appendChild(domDoc.createTextNode(TBR_SBBH));
-    QDomElement CHECK_ITEMS = domDoc.createElement("CHECK_ITEMS");
-    QStringList keys = CHECK_ITEM.keys();
-    for (int i = 0; i < keys.count(); ++i)
-    {
-        //原代码 估计是有bug的 value值在xml元素<>内部了  与协议及常理不符合
-        //QDomElement CHECK_ITEMNode = domDoc.createElement("CHECK_ITEM");
-        //QDomElement ITEM_NAME = domDoc.createElement("ITEM_NAME");
-        //ITEM_NAME.appendChild(domDoc.createTextNode(keys[i]));
-        //QDomElement ITEM_VALUE = domDoc.createElement(CHECK_ITEM[keys[i]]);
-        //CHECK_ITEMNode.appendChild(ITEM_VALUE);
-        //CHECK_ITEMNode.appendChild(ITEM_NAME);
-        //CHECK_ITEMS.appendChild(CHECK_ITEMNode);
-
-
-        QDomElement CHECK_ITEMNode = domDoc.createElement("CHECK_ITEM");
-        QDomElement ITEM_NAME = domDoc.createElement("ITEM_NAME");
-        ITEM_NAME.appendChild(domDoc.createTextNode(keys[i]));
-        QDomElement ITEM_VALUE = domDoc.createElement("ITEM_VALUE");
-        //有时候不开机 会有空值，对方MES不接受空值，这地方得加个空值判断，空的就NA
-        if (CHECK_ITEM[keys[i]].isEmpty()) {
-            ITEM_VALUE.appendChild(domDoc.createTextNode("NA"));
-        }
-        else {
-            ITEM_VALUE.appendChild(domDoc.createTextNode(CHECK_ITEM[keys[i]]));
-        }
-
-        CHECK_ITEMNode.appendChild(ITEM_NAME);
-        CHECK_ITEMNode.appendChild(ITEM_VALUE);
-        CHECK_ITEMS.appendChild(CHECK_ITEMNode);
-    }
-    DATA.appendChild(PROSN_ZJNode);
-    DATA.appendChild(TBR_SBBHNode);
-    DATA.appendChild(CHECK_ITEMS);
-    STD_IN.appendChild(ObjectID);
-    STD_IN.appendChild(DATA);
-    domDoc.appendChild(STD_IN);
-    return domDoc.toString(-1);
-}
-
+//初始化
 NetTester::NetTester(QWidget *parent)
     : QMainWindow(parent)
     , m_clientSocket(new QTcpSocket(this))
@@ -65,114 +13,147 @@ NetTester::NetTester(QWidget *parent)
 {
     ui.setupUi(this);
     bindConnect();
-    setWindowTitle(QString("TCP - client").toUtf8());
-
-    // 创建通信的套接字对象  初始化列表内
-    //m_socket = new QTcpSocket(this);
-    //创建服务器对象 初始化列表内
-    //m_tcpServer = new QTcpServer(this);
-    QFile file("test.txt",this);
-    file.open(QIODevice::OpenMode::enum_type::ReadOnly);
-    bool b = file.isOpen();
-    QString fileText = file.readAll();
-    Log(QString("open:%1").arg(b));
-    Log(fileText);
-    int reCode = sendTCP("127.0.0.1", 7000, fileText);
-    Log(QString("reCode = %1").arg(reCode));
+    setWindowTitle(QString("TCP - Client").toUtf8());
+    ui.groupBoxReceive->hide();
+    ui.editSendIP->setText("127.0.0.1");
+    ui.editSendPort->setText("7000");
+    
+    //测试文本丢txt里 读取到TestText  测试按钮发这个变量的数据
+    //QFile file("test.txt",this);
+    //file.open(QIODevice::OpenMode::enum_type::ReadOnly);
+    //TestText = file.readAll();
+    //Log(QString("TestText=%1").arg(TestText));
+    
+    //状态栏
+    ui.statusBar->showMessage("软件初始化完成 TCP未链接");
 }
+NetTester::~NetTester()
+{
+    //m_clientSocket->deleteLater();
+    //m_clientSocket->close();
+    //m_serverSocket->close();
+}
+
+//信号槽绑定
 void NetTester::bindConnect()
 {
-    //按钮
+    //按钮信号槽
     connect(ui.buttonListenTCP, &QPushButton::clicked, this, &NetTester::on_buttonListenTCP_clicked);
     connect(ui.buttonSendTCP, &QPushButton::clicked, this, &NetTester::on_buttonSendTCP_clicked);
+    connect(ui.buttonTest, &QPushButton::clicked, this, &NetTester::on_buttonTest_clicked);
+
+    //客户端 tcp信号槽
+    connect(m_clientSocket, &QTcpSocket::connected, this, &NetTester::clientConnected);
+    connect(m_clientSocket, &QTcpSocket::readyRead, this, &NetTester::clientReadyRead);
+    connect(m_clientSocket, &QTcpSocket::disconnected, this, &NetTester::clientDisconnected);
     
-    //客户端
-    connect(m_clientSocket, &QIODevice::readyRead, this, &NetTester::clentReadyRead);
-    //connect(m_clientSocket,&QAbstractSocket::error)
 
-    //// 检测服务器是否回复了数据
-    //connect(m_socket, &QTcpSocket::readyRead, [=]()
-    //    {
-    //        // 接收服务器发送的数据
-    //        QByteArray recvMsg = m_socket->readAll();
-    //        ui->record->append("服务器Say: " + recvMsg);
-    //    });
-
-    //// 检测是否和服务器是否连接成功了
-    //connect(m_socket, &QTcpSocket::connected, this, [=]()
-    //    {
-    //        ui->record->append("恭喜, 连接服务器成功!!!");
-    //        m_status->setPixmap(QPixmap(":/connect.png").scaled(20, 20));
-    //    });
-
-    //// 检测服务器是否和客户端断开了连接
-    //connect(m_socket, &QTcpSocket::disconnected, this, [=]()
-    //    {
-    //        ui->record->append("服务器已经断开了连接, ...");
-    //        ui->connectServer->setEnabled(true);
-    //        ui->disconnect->setEnabled(false);
-    //    });
 }
+//发送TCP数据包
 int NetTester::sendTCP(QString IP, quint16 port, QString data) {
-    m_clientSocket->connectToHost(QHostAddress(IP), port);
-    int reCode = m_clientSocket->write(ui.plainTextEditData->toPlainText().toLocal8Bit());
-    QAbstractSocket::SocketError error = m_clientSocket->error();
-    m_clientSocket->close();
+    if (m_clientSocket->peerAddress() != QHostAddress(IP)) {
+        m_clientSocket->disconnectFromHost();
+        m_clientSocket->connectToHost(QHostAddress(IP), port);
+        //m_clientSocket->waitForConnected();
+    }
+    //Log(QString("peer:%1").arg(m_clientSocket->peerAddress().toString()));
+    int reCode;
+    if (m_clientSocket->peerAddress() != QHostAddress(IP)) {
+        reCode = -1;
+        return reCode;
+    }
+    //Log(QString("连接到主机 :%1").arg(m_clientSocket->peerName()));
+    QByteArray transData = data.toLocal8Bit();
+    //reCode = m_clientSocket->write(transData, qstrlen(transData));
+    reCode = m_clientSocket->write(transData);
+    
     return reCode;
 }
+//发送TCP数据包 
 int NetTester::sendTCP(QString IP,quint16 port, QString data,QString& error) {
-    m_clientSocket->connectToHost(QHostAddress(IP), port);
-    int reCode = m_clientSocket->write(ui.plainTextEditData->toPlainText().toLocal8Bit());
-    error =  m_clientSocket->error();
-    m_clientSocket->close();
+    if (m_clientSocket->peerAddress() != QHostAddress(IP)) {
+        m_clientSocket->disconnectFromHost();
+        m_clientSocket->connectToHost(QHostAddress(IP), port);
+        //m_clientSocket->waitForConnected();
+    }
+    //Log(QString("peer:%1").arg(m_clientSocket->peerAddress().toString()));
+    int reCode;
+    if (m_clientSocket->peerAddress() != QHostAddress(IP)) {
+        reCode = -1;
+        error = QString("TCP链接失败 现在链接至:%1").arg(m_clientSocket->peerAddress().toString());
+        return reCode;
+    }
+    //Log(QString("连接到主机 :%1").arg(m_clientSocket->peerName()));
+    QByteArray transData = data.toLocal8Bit();
+    //reCode = m_clientSocket->write(transData, qstrlen(transData));
+    reCode = m_clientSocket->write(transData);
+    //m_clientSocket->waitForBytesWritten();
+    if (reCode == -1)
+        error = m_clientSocket->errorString();
+    else
+        error = "发送成功 数据长度:"+QString::number(reCode);
     return reCode;
 }
-
+//TODO:封装服务器端监听TCP TODO
 int NetTester::listenTCP(int port)
 {
     m_tcpServer->listen(QHostAddress::Any, port);
     return 0;
 }
-
-int NetTester::serverNewConnection()
+//TODO:封装服务器端监听TCP 新连接建立 TODO
+void NetTester::serverNewConnection()
 {
-    return 0;
+    
 }
-
-int NetTester::serverReadyRead()
+//TODO:封装服务器端监听TCP 新连接建立 准备读取 TODO
+void NetTester::serverReadyRead()
 {
 
-    return 0;
 }
-
-int NetTester::serverDisconnected()
+//TODO:封装服务器端监听TCP 断开链接 TODO
+void NetTester::serverDisconnected()
 {
-    return 0;
-}
 
-int NetTester::clentReadyRead()
+}
+//TODO:封装客户端监听TCP 准备读取
+void NetTester::clientReadyRead()
 {
-    return 0;
+    ui.statusBar->showMessage("从服务器端接收数据");
 }
-
-int NetTester::Log(QString log)
+void NetTester::clientConnected()
+{
+    ui.statusBar->showMessage("客户端TCP链接已建立:"+m_clientSocket->peerAddress().toString());
+}
+void NetTester::clientDisconnected()
+{
+    ui.statusBar->showMessage("客户端TCP链接已断开");
+}
+//日志
+void NetTester::Log(QString log)
 {
     ui.plainTextEditLog->appendPlainText(log);
-    return 0;
 }
+//按钮：发送TCP
 void NetTester::on_buttonSendTCP_clicked()
 {
-    Log("on_buttonSendTCP_clicked");
+    Log("准备发送数据");
     QString IP = ui.editSendIP->text();
     unsigned short port = ui.editSendPort->text().toUShort();
     QString data = ui.plainTextEditData->toPlainText();
     QString error;
     int reCode = sendTCP(IP, port, data,error);
-    Log(QString("SendTCP reCode:%1 error:%2").arg(reCode).arg(error));
+    if (reCode == -1) {
+        Log(QString("发送数据出错 reCode:%1 error:%2").arg(reCode).arg(error));
+    }
+    else {
+        Log(QString("发送数据成功 数据长度:%1").arg(reCode));
+    }
+    
 }
+//按钮：监听TCP
 void NetTester::on_buttonListenTCP_clicked()
 {
-    Log("on_buttonListenTCP_clicked");
+    Log("准备监听TCP 此功能未实现");
     quint16 port = ui.editPort->text().toUInt();
     //Log(QString("port : %1").arg(port));
     if (port == 0) {
@@ -183,4 +164,19 @@ void NetTester::on_buttonListenTCP_clicked()
     if(reCode == 0)
         ui.buttonListenTCP->setEnabled(false);
 
+}
+//按钮：测试
+void NetTester::on_buttonTest_clicked()
+{
+    Log(QString("测试功能：循环发送TCP数据包10000次"));
+    QString IP = ui.editSendIP->text();
+    unsigned short port = ui.editSendPort->text().toUShort();
+    QString data = TestText;
+    QString error;
+    int reCode;
+    for (int i = 0; i < 10000; i++)
+    {
+        reCode = sendTCP(IP, port, data, error);
+        Log(QString("测试次数:%1 reCode=%2 error=%3").arg(i).arg(reCode).arg(error));
+    }
 }
