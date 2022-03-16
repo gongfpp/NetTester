@@ -15,29 +15,37 @@ public:
 
     void bindConnect();
 
+    //网络函数
     int sendTCP(QString IP,quint16 port, QString data);
     int sendTCP(QString IP, quint16 port, QString data, QString& error);
     int listenTCP(int port);
+
+    //按钮槽
+    void on_buttonConnect_clicked();
+    void on_buttonSendTCP_clicked();
+    void on_buttonListenTCP_clicked();
+    void on_buttonMultiSendTCP_clicked();
+    void on_buttonTest_clicked();
+
+
+    //日志
+    void LogInfo(QString log,int opCode = 0);
+
+
     //服务器槽
     void serverNewConnection();
     void serverReadyRead();
     void serverDisconnected();
+
     //客户端槽
     void clientReadyRead();
     void clientConnected();
     void clientDisconnected();
 
-    //按钮槽
-    void on_buttonSendTCP_clicked();
-    void on_buttonListenTCP_clicked();
-    void on_buttonTest_clicked();
-
-    //日志
-    void Log(QString log);
-
 signals:
     
-    
+protected:
+    void closeEvent(QCloseEvent* event) override;
 
 private:
     Ui::NetTesterClass ui;
