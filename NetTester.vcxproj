@@ -98,12 +98,8 @@
     <QtRcc Include="NetTester.qrc" />
     <QtUic Include="NetTester.ui" />
     <QtMoc Include="NetTester.h" />
-    <ClCompile Include="CTCP.cpp" />
     <ClCompile Include="NetTester.cpp" />
     <ClCompile Include="main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="CTCP.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

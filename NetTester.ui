@@ -48,6 +48,13 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QPushButton" name="buttonTest">
+            <property name="text">
+             <string>临时测试用</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
        </item>
@@ -86,9 +93,23 @@
            </layout>
           </item>
           <item>
+           <widget class="QPushButton" name="buttonConnect">
+            <property name="text">
+             <string>建立链接</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="buttonSendTCP">
             <property name="text">
              <string>发送数据包</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="buttonMultiSendTCP">
+            <property name="text">
+             <string>循环发送1000次数据</string>
             </property>
            </widget>
           </item>
